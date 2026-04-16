@@ -1486,7 +1486,7 @@ class PointCloudViewer:
             aspect=aspect,
             wxyz=q,
             position=t,
-            scale=0.1,
+            scale=0.03,
             color=camera_color_rgb,
         )
 

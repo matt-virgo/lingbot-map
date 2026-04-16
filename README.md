@@ -115,12 +115,29 @@ python demo.py --model_path /path/to/checkpoint.pt \
 ```
 
 
-### With Sky Masking
+### Sky Masking
+
+Sky masking uses an ONNX sky segmentation model to filter out sky points from the reconstructed point cloud, which improves visualization quality for outdoor scenes.
+
+**Setup:**
+
+```bash
+# Install onnxruntime (required)
+pip install onnxruntime        # CPU
+# or
+pip install onnxruntime-gpu    # GPU (faster for large image sets)
+```
+
+The sky segmentation model (`skyseg.onnx`) will be automatically downloaded from [HuggingFace](https://huggingface.co/JianyuanWang/skyseg/resolve/main/skyseg.onnx) on first use.
+
+**Usage:**
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --mask_sky
 ```
+
+Sky masks are cached in `<image_folder>_sky_masks/` so subsequent runs skip regeneration.
 
 ### Without FlashInfer (SDPA fallback)
 

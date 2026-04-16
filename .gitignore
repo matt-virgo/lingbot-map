@@ -10,3 +10,4 @@ demo_render/
 CLAUDE.md
 .claude/
 .agents/
+skyseg.onnx

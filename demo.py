@@ -138,9 +138,8 @@ _BATCHED_NDIMS = {
     "world_points_conf": 4,
     "extrinsic": 4,
     "intrinsic": 4,
-    "chunk_sim3_scales": 2,
-    "chunk_sim3_poses": 4,
-    "chunk_se3_poses": 4,
+    "chunk_scales": 2,
+    "chunk_transforms": 4,
     "images": 5,
 }
 
@@ -256,14 +255,13 @@ def main():
     # Windowed options
     parser.add_argument("--window_size", type=int, default=64, help="Frames per window (windowed mode)")
     parser.add_argument("--overlap_size", type=int, default=16, help="Overlap between windows")
-    parser.add_argument("--sim3", action="store_true", default=True, help="Use Sim(3) alignment between windows")
-    parser.add_argument("--no_sim3", dest="sim3", action="store_false", help="Disable Sim(3), use SE(3) instead")
+
 
     # Visualization
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--conf_threshold", type=float, default=1.0)
+    parser.add_argument("--conf_threshold", type=float, default=1.5)
     parser.add_argument("--downsample_factor", type=int, default=10)
-    parser.add_argument("--point_size", type=float, default=0.005)
+    parser.add_argument("--point_size", type=float, default=0.0007)
     parser.add_argument("--mask_sky", action="store_true", help="Apply sky segmentation to filter out sky points")
 
     args = parser.parse_args()
@@ -314,8 +312,6 @@ def main():
                 window_size=args.window_size,
                 overlap_size=args.overlap_size,
                 num_scale_frames=args.num_scale_frames,
-                sim3=args.sim3,
-                se3=not args.sim3,
             )
 
     t_infer = time.time() - t0
@@ -330,7 +326,7 @@ def main():
         viewer = PointCloudViewer(
             pred_dict=prepare_for_visualization(predictions, images_cpu),
             port=args.port,
-            init_conf_threshold=args.conf_threshold,
+            vis_threshold=args.conf_threshold,
             downsample_factor=args.downsample_factor,
             point_size=args.point_size,
             mask_sky=args.mask_sky,
