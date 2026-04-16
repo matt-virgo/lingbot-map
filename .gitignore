@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.so
+.eggs/
+demo_render/
+CLAUDE.md
+.claude/
+.agents/
