@@ -63,21 +63,21 @@ pip install -e ".[vis]"
 
 # Demo
 
-## Streaming Inference from Images
+### Streaming Inference from Images
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/
 ```
 
-## Streaming Inference from Video
+### Streaming Inference from Video
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10
 ```
 
-## Streaming with Keyframe Interval
+### Streaming with Keyframe Interval
 
 Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences 
 which excesses 320 frames.
@@ -87,7 +87,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --keyframe_interval 6
 ```
 
-## Windowed Inference (for long sequences, >3000 frames)
+### Windowed Inference (for long sequences, >3000 frames)
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10 \
@@ -95,14 +95,14 @@ python demo.py --model_path /path/to/checkpoint.pt \
 ```
 
 
-## With Sky Masking
+### With Sky Masking
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --mask_sky
 ```
 
-## Without FlashInfer (SDPA fallback)
+### Without FlashInfer (SDPA fallback)
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
