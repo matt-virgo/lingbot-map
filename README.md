@@ -89,12 +89,6 @@ Run `demo.py` for interactive 3D visualization via a browser-based [viser](https
 
 We provide three example scenes in `example/` that you can run out of the box:
 
-| Scene | Frames | Description |
-|:---|:---|:---|
-| `church` | 286 | Outdoor church with complex geometry |
-| `oxford` | 320 | Oxford street-level walkthrough |
-| `university4` | 324 | University campus outdoor scene |
-
 ```bash
 # Church scene
 python demo.py --model_path /path/to/checkpoint.pt \
