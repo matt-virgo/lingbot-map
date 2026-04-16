@@ -90,6 +90,8 @@ class PointCloudViewer:
         use_point_map: bool = False,
         mask_sky: bool = False,
         image_folder: Optional[str] = None,
+        sky_mask_dir: Optional[str] = None,
+        sky_mask_visualization_dir: Optional[str] = None,
         depth_stride: int = 1,
     ):
         self.model = model
@@ -107,6 +109,8 @@ class PointCloudViewer:
         if pred_dict is not None:
             pc_list, color_list, conf_list, cam_dict = self._process_pred_dict(
                 pred_dict, use_point_map, mask_sky, image_folder,
+                sky_mask_dir=sky_mask_dir,
+                sky_mask_visualization_dir=sky_mask_visualization_dir,
                 depth_stride=depth_stride,
             )
         else:
@@ -138,6 +142,8 @@ class PointCloudViewer:
         use_point_map: bool,
         mask_sky: bool,
         image_folder: Optional[str],
+        sky_mask_dir: Optional[str] = None,
+        sky_mask_visualization_dir: Optional[str] = None,
         depth_stride: int = 1,
     ) -> Tuple[List, List, List, Dict]:
         """Process prediction dictionary to extract visualization data.
@@ -147,6 +153,8 @@ class PointCloudViewer:
             use_point_map: Use point map instead of depth-based projection.
             mask_sky: Apply sky segmentation to filter sky points.
             image_folder: Path to images for sky segmentation.
+            sky_mask_dir: Directory for cached sky masks.
+            sky_mask_visualization_dir: Directory for sky mask visualization images.
             depth_stride: Only project depth to point cloud every N frames.
                 Frames not projected will have empty point clouds but still
                 show camera frustums and images. 1 = every frame (default).
@@ -169,7 +177,11 @@ class PointCloudViewer:
 
         # Apply sky segmentation if enabled
         if mask_sky:
-            conf = apply_sky_segmentation(conf, image_folder=image_folder, images=images)
+            conf = apply_sky_segmentation(
+                conf, image_folder=image_folder, images=images,
+                sky_mask_dir=sky_mask_dir,
+                sky_mask_visualization_dir=sky_mask_visualization_dir,
+            )
 
         # Convert images from (S, 3, H, W) to (S, H, W, 3)
         colors = images.transpose(0, 2, 3, 1)  # now (S, H, W, 3)
@@ -404,7 +416,8 @@ class PointCloudViewer:
             "Show Camera", initial_value=self.show_camera
         )
         self.vis_threshold_slider = self.server.gui.add_slider(
-            "Visibility Threshold", min=0.1, max=30.0, step=0.1, initial_value=self.vis_threshold
+            "Visibility Threshold", min=1.0, max=5.0, step=0.01,
+            initial_value=self.vis_threshold,
         )
         self.camera_downsample_slider = self.server.gui.add_slider(
             "Camera Downsample Factor", min=1, max=50, step=1, initial_value=1
@@ -412,11 +425,6 @@ class PointCloudViewer:
 
         # Point cloud filtering controls
         with self.server.gui.add_folder("Point Cloud Filtering"):
-            self.conf_percentile_slider = self.server.gui.add_slider(
-                "Confidence Percentile (%)",
-                min=0, max=95, step=1, initial_value=0,
-                hint="Remove the lowest N% of points by confidence. 0 = disabled.",
-            )
             self.bbox_clip_slider = self.server.gui.add_slider(
                 "Bounding Box Keep (%)",
                 min=50.0, max=100.0, step=0.5, initial_value=100.0,
@@ -1346,20 +1354,6 @@ class PointCloudViewer:
         if len(pred_pts) == 0:
             return pred_pts, color
 
-        # Confidence percentile filter
-        if conf is not None and hasattr(self, 'conf_percentile_slider'):
-            pct = self.conf_percentile_slider.value
-            if pct > 0:
-                conf_remaining = conf_flat[mask] if conf is not None else None
-                if conf_remaining is not None and len(conf_remaining) > 0:
-                    threshold = np.percentile(conf_remaining, pct)
-                    pct_mask = conf_remaining >= threshold
-                    pred_pts = pred_pts[pct_mask]
-                    color = color[pct_mask]
-
-        if len(pred_pts) == 0:
-            return pred_pts, color
-
         # Bounding box clip: remove points far from the scene center
         if hasattr(self, 'bbox_clip_slider'):
             clip_pct = self.bbox_clip_slider.value
@@ -1450,7 +1444,7 @@ class PointCloudViewer:
                 name=f"/frames/{step}/pred_pts",
                 points=pred_pts,
                 colors=color,
-                point_size=0.005,
+                point_size=self.psize_slider.value,
             )
         )
 
@@ -1509,8 +1503,8 @@ class PointCloudViewer:
             )
             gui_next_frame = self.server.gui.add_button("Next Step", disabled=False)
             gui_prev_frame = self.server.gui.add_button("Prev Step", disabled=False)
-            gui_playing = self.server.gui.add_checkbox("Playing", False)
-            gui_framerate = self.server.gui.add_slider("FPS", min=1, max=60, step=0.1, initial_value=1)
+            gui_playing = self.server.gui.add_checkbox("Playing", True)
+            gui_framerate = self.server.gui.add_slider("FPS", min=1, max=60, step=0.1, initial_value=20)
             gui_framerate_options = self.server.gui.add_button_group("FPS options", ("10", "20", "30", "60"))
 
         @gui_next_frame.on_click
