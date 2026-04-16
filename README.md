@@ -1,7 +1,8 @@
 <h1 align="center">LingBot-Map: Geometric Context Transformer for Streaming 3D Reconstruction</h1>
 
 <p align="center">
-  <a href="lingbot-map_paper.pdf"><img src="https://img.shields.io/static/v1?label=Paper&message=PDF&color=red&logo=arxiv"></a>
+  <a href="https://arxiv.org/abs/2604.14141"><img src="https://img.shields.io/static/v1?label=Paper&message=arXiv&color=red&logo=arxiv"></a>
+  <a href="lingbot-map_paper.pdf"><img src="https://img.shields.io/static/v1?label=Paper&message=PDF&color=red&logo=adobeacrobatreader"></a>
   <a href="https://technology.robbyant.com/lingbot-map"><img src="https://img.shields.io/badge/Project-Website-blue"></a>
   <a href="https://huggingface.co/robbyant/lingbot-map"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%97%20Model&message=HuggingFace&color=orange"></a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
@@ -122,10 +123,10 @@ This project is released under the Apache License 2.0. See [LICENSE](LICENSE.txt
 # Citation
 
 ```bibtex
-@article{lingbot-map2026,
-  title={},
-  author={},
-  journal={arXiv preprint arXiv:},
+@article{chen2026geometric,
+  title={Geometric Context Transformer for Streaming 3D Reconstruction},
+  author={Chen, Lin-Zhuo and Gao, Jian and Chen, Yihang and Cheng, Ka Leong and Sun, Yipengjing and Hu, Liangxiao and Xue, Nan and Zhu, Xing and Shen, Yujun and Yao, Yao and Xu, Yinghao},
+  journal={arXiv preprint arXiv:2604.14141},
   year={2026}
 }
 ```
