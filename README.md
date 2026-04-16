@@ -13,6 +13,10 @@
   <img src="assets/teaser.png" width="100%">
 </p>
 
+<p align="center">
+  <video src="assets/teaser.mp4" width="100%" autoplay loop muted playsinline></video>
+</p>
+
 
 ---
 
