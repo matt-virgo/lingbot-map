@@ -83,6 +83,32 @@ pip install -e ".[vis]"
 
 # 🎬 Demo
 
+Run `demo.py` for interactive 3D visualization via a browser-based [viser](https://github.com/nerfstudio-project/viser) viewer (default `http://localhost:8080`).
+
+### Try the Example Scenes
+
+We provide three example scenes in `example/` that you can run out of the box:
+
+| Scene | Frames | Description |
+|:---|:---|:---|
+| `church` | 286 | Outdoor church with complex geometry |
+| `oxford` | 320 | Oxford street-level walkthrough |
+| `university4` | 324 | University campus outdoor scene |
+
+```bash
+# Church scene
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder example/church --mask_sky
+
+# Oxford scene with sky masking (outdoor)
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder example/oxford --mask_sky
+
+# University scene
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder example/university4 --mask_sky
+```
+
 ### Streaming Inference from Images
 
 ```bash
@@ -99,8 +125,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 
 ### Streaming with Keyframe Interval
 
-Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences 
-which excesses 320 frames.
+Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames.
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
@@ -108,6 +133,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 ```
 
 ### Windowed Inference (for long sequences, >3000 frames)
+
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10 \
@@ -137,7 +163,23 @@ python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --mask_sky
 ```
 
-Sky masks are cached in `<image_folder>_sky_masks/` so subsequent runs skip regeneration.
+Sky masks are cached in `<image_folder>_sky_masks/` so subsequent runs skip regeneration. You can also specify a custom cache directory with `--sky_mask_dir`, or save side-by-side mask visualizations with `--sky_mask_visualization_dir`:
+
+```bash
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder /path/to/images/ --mask_sky \
+    --sky_mask_dir /path/to/cached_masks/ \
+    --sky_mask_visualization_dir /path/to/mask_viz/
+```
+
+### Visualization Options
+
+| Argument | Default | Description |
+|:---|:---|:---|
+| `--port` | `8080` | Viser viewer port |
+| `--conf_threshold` | `1.5` | Visibility threshold for filtering low-confidence points |
+| `--point_size` | `0.00001` | Point cloud point size |
+| `--downsample_factor` | `10` | Spatial downsampling for point cloud display |
 
 ### Without FlashInfer (SDPA fallback)
 
