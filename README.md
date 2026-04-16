@@ -13,10 +13,7 @@
   <img src="assets/teaser.png" width="100%">
 </p>
 
-<p align="center">
-  <video src="assets/teaser.mp4" width="100%" autoplay loop muted playsinline></video>
-</p>
-
+https://github.com/user-attachments/assets/fe39e095-af2c-4ec9-b68d-a8ba97e505ab
 
 ---
 
