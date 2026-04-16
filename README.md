@@ -1,23 +1,38 @@
-<h1 align="center">LingBot-Map: Geometric Context Transformer for Streaming 3D Reconstruction</h1>
-
-<p align="center">
-  <a href="https://arxiv.org/abs/2604.14141"><img src="https://img.shields.io/static/v1?label=Paper&message=arXiv&color=red&logo=arxiv"></a>
-  <a href="lingbot-map_paper.pdf"><img src="https://img.shields.io/static/v1?label=Paper&message=PDF&color=red&logo=adobeacrobatreader"></a>
-  <a href="https://technology.robbyant.com/lingbot-map"><img src="https://img.shields.io/badge/Project-Website-blue"></a>
-  <a href="https://huggingface.co/robbyant/lingbot-map"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%97%20Model&message=HuggingFace&color=orange"></a>
-  <a href="https://www.modelscope.cn/models/Robbyant/lingbot-map"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%96%20Model&message=ModelScope&color=purple"></a>
-  <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
-</p>
-
-<p align="center">
+<div align="center">
   <img src="assets/teaser.png" width="100%">
-</p>
+
+<h1>LingBot-Map: Geometric Context Transformer for Streaming 3D Reconstruction</h1>
+
+Robbyant Team
+
+</div>
+
+<div align="center">
+
+[![Paper](https://img.shields.io/static/v1?label=Paper&message=arXiv&color=red&logo=arxiv)](https://arxiv.org/abs/2604.14141)
+[![PDF](https://img.shields.io/static/v1?label=Paper&message=PDF&color=red&logo=adobeacrobatreader)](lingbot-map_paper.pdf)
+[![Project](https://img.shields.io/badge/Project-Website-blue)](https://technology.robbyant.com/lingbot-map)
+[![HuggingFace](https://img.shields.io/static/v1?label=%F0%9F%A4%97%20Model&message=HuggingFace&color=orange)](https://huggingface.co/robbyant/lingbot-map)
+[![ModelScope](https://img.shields.io/static/v1?label=%F0%9F%A4%96%20Model&message=ModelScope&color=purple)](https://www.modelscope.cn/models/Robbyant/lingbot-map)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE.txt)
+
+</div>
 
 https://github.com/user-attachments/assets/fe39e095-af2c-4ec9-b68d-a8ba97e505ab
 
+-----
+
+🗺️ Meet LingBot-Map! We've built a feed-forward 3D foundation model for streaming 3D reconstruction! 🏗️🌍
+
+LingBot-Map has focused on:
+
+- **Geometric Context Transformer**: Architecturally unifies coordinate grounding, dense geometric cues, and long-range drift correction within a single streaming framework through anchor context, pose-reference window, and trajectory memory.
+- **High-Efficiency Streaming Inference**: A feed-forward architecture with paged KV cache attention, enabling stable inference at ~20 FPS on 518×378 resolution over long sequences exceeding 10,000 frames.
+- **State-of-the-Art Reconstruction**: Superior performance on diverse benchmarks compared to both existing streaming and iterative optimization-based approaches.
+
 ---
 
-# Quick Start
+# ⚙️ Quick Start
 
 ## Installation
 
@@ -60,13 +75,13 @@ pip install flashinfer-python -i https://flashinfer.ai/whl/cu128/torch2.9/
 pip install -e ".[vis]"
 ```
 
-# Model Download
+# 📦 Model Download
 
 | Model Name | Huggingface Repository | ModelScope Repository | Description |
 | :--- | :--- | :--- | :--- |
 | lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Base model checkpoint (4.63 GB) |
 
-# Demo
+# 🎬 Demo
 
 ### Streaming Inference from Images
 
@@ -114,11 +129,11 @@ python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --use_sdpa
 ```
 
-# License
+# 📜 License
 
 This project is released under the Apache License 2.0. See [LICENSE](LICENSE.txt) file for details.
 
-# Citation
+# 📖 Citation
 
 ```bibtex
 @article{chen2026geometric,
@@ -129,7 +144,7 @@ This project is released under the Apache License 2.0. See [LICENSE](LICENSE.txt
 }
 ```
 
-# Acknowledgments
+# ✨ Acknowledgments
 
 This work builds upon several excellent open-source projects:
 
