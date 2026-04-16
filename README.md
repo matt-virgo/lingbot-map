@@ -5,6 +5,7 @@
   <a href="lingbot-map_paper.pdf"><img src="https://img.shields.io/static/v1?label=Paper&message=PDF&color=red&logo=adobeacrobatreader"></a>
   <a href="https://technology.robbyant.com/lingbot-map"><img src="https://img.shields.io/badge/Project-Website-blue"></a>
   <a href="https://huggingface.co/robbyant/lingbot-map"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%97%20Model&message=HuggingFace&color=orange"></a>
+  <a href="https://www.modelscope.cn/models/Robbyant/lingbot-map"><img src="https://img.shields.io/static/v1?label=%F0%9F%A4%96%20Model&message=ModelScope&color=purple"></a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-Apache--2.0-green"></a>
 </p>
 
@@ -12,9 +13,6 @@
   <img src="assets/teaser.png" width="100%">
 </p>
 
-<p align="center">
-  <video src="https://gw.alipayobjects.com/v/huamei_vaouhm/afts/video/q0sdTr9Mm6IAAAAAmyAAAAgADglFAQJr" width="100%" autoplay loop muted playsinline></video>
-</p>
 
 ---
 
@@ -60,6 +58,12 @@ pip install flashinfer-python -i https://flashinfer.ai/whl/cu128/torch2.9/
 ```bash
 pip install -e ".[vis]"
 ```
+
+# Model Download
+
+| Model Name | Huggingface Repository | ModelScope Repository | Description |
+| :--- | :--- | :--- | :--- |
+| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Base model checkpoint (4.63 GB) |
 
 # Demo
 
@@ -108,13 +112,6 @@ python demo.py --model_path /path/to/checkpoint.pt \
 python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --use_sdpa
 ```
-
-# Model Download
-
-| Model Name | Huggingface Repository | Description |
-| :--- | :--- | :--- |
-| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | Base model checkpoint (4.63 GB) |
-
 
 # License
 
