@@ -146,6 +146,8 @@ This project is released under the Apache License 2.0. See [LICENSE](LICENSE.txt
 
 # ✨ Acknowledgments
 
+We thank Shangzhan Zhang, Jianyuan Wang, Yudong Jin, Christian Rupprecht, and Xun Cao for their helpful discussions and support.
+
 This work builds upon several excellent open-source projects:
 
 - [VGGT](https://github.com/facebookresearch/vggt)
