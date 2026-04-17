@@ -254,7 +254,7 @@ def main():
         default=1,
         help="Streaming only. Every N-th frame after scale frames is kept as a keyframe. 1 = every frame.",
     )
-    parser.add_argument("--kv_cache_sliding_window", type=int, default=16)
+    parser.add_argument("--kv_cache_sliding_window", type=int, default=64)
     parser.add_argument("--kv_cache_scale_frames", type=int, default=8)
     parser.add_argument("--use_sdpa", action="store_true", default=False,
                         help="Use SDPA backend (no flashinfer needed). Default: FlashInfer")
