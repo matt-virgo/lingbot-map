@@ -91,7 +91,7 @@ Run `demo.py` for interactive 3D visualization via a browser-based [viser](https
 
 ### Try the Example Scenes
 
-We provide three example scenes in `example/` that you can run out of the box:
+We provide four example scenes in `example/` that you can run out of the box:
 
 ```bash
 # Church scene
@@ -105,6 +105,10 @@ python demo.py --model_path /path/to/checkpoint.pt \
 # University scene
 python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder example/university4 --mask_sky
+
+# Loop scene (loop closure trajectory)
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder example/loop --mask_sky
 ```
 
 ### Streaming Inference from Images
