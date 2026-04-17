@@ -122,6 +122,7 @@ def load_model(args, device):
         kv_cache_cross_frame_special=True,
         kv_cache_include_scale_frames=True,
         use_sdpa=args.use_sdpa,
+        camera_num_iterations=args.camera_num_iterations,
     )
 
     if args.model_path:
@@ -260,6 +261,9 @@ def main():
         help="Streaming only. Every N-th frame after scale frames is kept as a keyframe. 1 = every frame.",
     )
     parser.add_argument("--kv_cache_sliding_window", type=int, default=64)
+    parser.add_argument("--camera_num_iterations", type=int, default=4,
+                        help="Camera head iterative-refinement steps. Default 4; set 1 for faster inference "
+                             "(skips 3 refinement passes at a small accuracy cost).")
     parser.add_argument("--use_sdpa", action="store_true", default=False,
                         help="Use SDPA backend (no flashinfer needed). Default: FlashInfer")
     parser.add_argument(

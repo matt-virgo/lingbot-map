@@ -104,11 +104,11 @@ python demo.py --model_path /path/to/checkpoint.pt \
 
 # University scene
 python demo.py --model_path /path/to/checkpoint.pt \
-    --image_folder example/university4 --mask_sky
+    --image_folder example/university --mask_sky
 
 # Loop scene (loop closure trajectory)
 python demo.py --model_path /path/to/checkpoint.pt \
-    --image_folder example/loop --mask_sky
+    --image_folder example/loop
 ```
 
 ### Streaming Inference from Images
@@ -196,6 +196,17 @@ If you run into out-of-memory issues, try one (or both) of the following:
 
 - **`--offload_to_cpu`** — offload per-frame predictions to CPU during inference (on by default; use `--no-offload_to_cpu` only if you have memory to spare).
 - **`--num_scale_frames 2`** — reduce the number of bidirectional scale frames from the default 8 down to 2, which shrinks the activation peak of the initial scale phase.
+
+### Faster Inference
+
+Lower the number of iterative refinement steps in the camera head to trade a small amount of pose accuracy for wall-clock speed:
+
+```bash
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder /path/to/images/ --camera_num_iterations 1
+```
+
+`--camera_num_iterations` defaults to `4`; setting it to `1` skips three refinement passes in the camera head (and shrinks its KV cache by 4×).
 
 # 📜 License
 
