@@ -42,7 +42,6 @@ class PointCloudViewer:
     - Camera frustum visualization with gradient colors
     - Frame-by-frame playback animation (3D/4D modes)
     - Range-based and recent-N-frames visualization modes
-    - Navigation mode (camera following)
     - Video export with FFmpeg
 
     Args:
@@ -304,6 +303,16 @@ class PointCloudViewer:
                 [0.0, -1.0, 0.0]
             )
 
+        # Video frame display controls — kept at top so the current frame is always visible
+        with self.server.gui.add_folder("Video Display"):
+            self.show_video_checkbox = self.server.gui.add_checkbox("Show Current Frame", initial_value=True)
+            if hasattr(self, 'original_images') and len(self.original_images) > 0:
+                self.current_frame_image = self.server.gui.add_image(
+                    self.original_images[0], label="Current Frame"
+                )
+            else:
+                self.current_frame_image = None
+
         # Preset view direction buttons
         with self.server.gui.add_folder("Reset View Direction"):
             btn_look_at_center = self.server.gui.add_button(
@@ -412,47 +421,6 @@ class PointCloudViewer:
         self.camera_downsample_slider = self.server.gui.add_slider(
             "Camera Downsample Factor", min=1, max=50, step=1, initial_value=1
         )
-
-        # Range visualization controls
-        with self.server.gui.add_folder("Frame Range Control"):
-            self.range_mode_checkbox = self.server.gui.add_checkbox("Range Mode", initial_value=False)
-            self.range_start_slider = self.server.gui.add_slider(
-                "Start Frame", min=0, max=len(self.all_steps) - 1, step=1, initial_value=0, disabled=True
-            )
-            self.range_end_slider = self.server.gui.add_slider(
-                "End Frame", min=0, max=len(self.all_steps) - 1, step=1,
-                initial_value=len(self.all_steps) - 1, disabled=True
-            )
-            self.recent_n_mode_checkbox = self.server.gui.add_checkbox("Recent N Frames Mode", initial_value=False)
-            self.recent_n_slider = self.server.gui.add_slider(
-                "Recent N Frames", min=1, max=len(self.all_steps), step=1,
-                initial_value=min(10, len(self.all_steps)), disabled=True
-            )
-
-        # Navigation mode controls
-        with self.server.gui.add_folder("Navigation Mode"):
-            self.navigation_mode_checkbox = self.server.gui.add_checkbox("Follow Camera", initial_value=False)
-            self.smooth_navigation_checkbox = self.server.gui.add_checkbox("Smooth Transition", initial_value=True)
-            self.navigation_offset_slider = self.server.gui.add_slider(
-                "Camera Offset", min=0.0, max=2.0, step=0.05, initial_value=0.5
-            )
-            self.navigation_fov_checkbox = self.server.gui.add_checkbox("Match FOV", initial_value=True)
-            self.go_to_camera_button = self.server.gui.add_button("Go to Current Camera")
-
-        @self.go_to_camera_button.on_click
-        def _(_) -> None:
-            if hasattr(self, 'gui_timestep'):
-                self._move_to_camera(self.gui_timestep.value, smooth=self.smooth_navigation_checkbox.value)
-
-        # Video frame display controls
-        with self.server.gui.add_folder("Video Display"):
-            self.show_video_checkbox = self.server.gui.add_checkbox("Show Current Frame", initial_value=True)
-            if hasattr(self, 'original_images') and len(self.original_images) > 0:
-                self.current_frame_image = self.server.gui.add_image(
-                    self.original_images[0], label="Current Frame"
-                )
-            else:
-                self.current_frame_image = None
 
         # Screenshot controls
         with self.server.gui.add_folder("Screenshot"):
@@ -601,42 +569,6 @@ class PointCloudViewer:
         @self.camera_downsample_slider.on_update
         def _(_) -> None:
             self._regenerate_cameras()
-
-        @self.range_mode_checkbox.on_update
-        def _(_) -> None:
-            self.range_start_slider.disabled = not self.range_mode_checkbox.value
-            self.range_end_slider.disabled = not self.range_mode_checkbox.value
-            if self.range_mode_checkbox.value:
-                self.recent_n_mode_checkbox.value = False
-            if hasattr(self, 'frame_nodes'):
-                self.update_frame_visibility()
-
-        @self.recent_n_mode_checkbox.on_update
-        def _(_) -> None:
-            self.recent_n_slider.disabled = not self.recent_n_mode_checkbox.value
-            if self.recent_n_mode_checkbox.value:
-                self.range_mode_checkbox.value = False
-            if hasattr(self, 'frame_nodes'):
-                self.update_frame_visibility()
-
-        @self.recent_n_slider.on_update
-        def _(_) -> None:
-            if hasattr(self, 'frame_nodes'):
-                self.update_frame_visibility()
-
-        @self.range_start_slider.on_update
-        def _(_) -> None:
-            if self.range_start_slider.value > self.range_end_slider.value:
-                self.range_end_slider.value = self.range_start_slider.value
-            if hasattr(self, 'frame_nodes'):
-                self.update_frame_visibility()
-
-        @self.range_end_slider.on_update
-        def _(_) -> None:
-            if self.range_end_slider.value < self.range_start_slider.value:
-                self.range_start_slider.value = self.range_end_slider.value
-            if hasattr(self, 'frame_nodes'):
-                self.update_frame_visibility()
 
     def _regenerate_point_clouds(self):
         """Regenerate all point clouds with current settings."""
@@ -920,28 +852,15 @@ class PointCloudViewer:
         return trimesh.util.concatenate(segments)
 
     def update_frame_visibility(self):
-        """Update frame visibility based on range mode settings."""
+        """Show all frames up to the current timestep (or only the current one in 4D mode)."""
         if not hasattr(self, 'frame_nodes') or not hasattr(self, 'gui_timestep'):
             return
 
         current_timestep = self.gui_timestep.value
-
-        if self.recent_n_mode_checkbox.value:
-            n = int(self.recent_n_slider.value)
-            start_idx = max(0, current_timestep - n + 1)
-            end_idx = current_timestep
-            for i, frame_node in enumerate(self.frame_nodes):
-                frame_node.visible = start_idx <= i <= end_idx
-        elif self.range_mode_checkbox.value:
-            start_idx = self.range_start_slider.value
-            end_idx = self.range_end_slider.value
-            for i, frame_node in enumerate(self.frame_nodes):
-                frame_node.visible = start_idx <= i <= end_idx
-        else:
-            for i, frame_node in enumerate(self.frame_nodes):
-                frame_node.visible = (
-                    i <= current_timestep if not self.fourd else i == current_timestep
-                )
+        for i, frame_node in enumerate(self.frame_nodes):
+            frame_node.visible = (
+                i <= current_timestep if not self.fourd else i == current_timestep
+            )
 
     def _move_to_camera(self, frame_idx: int, smooth: bool = True):
         """Move viewer camera to match reconstructed camera at given frame."""
@@ -955,12 +874,12 @@ class PointCloudViewer:
         focal = self.cam_dict["focal"][step] if "focal" in self.cam_dict else 1.0
         pp = self.cam_dict["pp"][step] if "pp" in self.cam_dict else (1.0, 1.0)
 
-        offset = self.navigation_offset_slider.value if hasattr(self, 'navigation_offset_slider') else 0.5
+        offset = 0.5
         viewing_dir = R[:, 2]  # camera Z axis in world frame
         position = t - viewing_dir * offset
         look_at = t + viewing_dir * 0.5  # look slightly ahead of camera
 
-        fov = 2 * np.arctan(pp[0] / focal) if self.navigation_fov_checkbox.value else None
+        fov = 2 * np.arctan(pp[0] / focal)
         up = -R[:, 1]  # camera -Y axis in world frame
 
         for client in self.server.get_clients().values():
@@ -1286,16 +1205,10 @@ class PointCloudViewer:
                 if current_timestep < len(self.original_images):
                     self.current_frame_image.image = self.original_images[current_timestep]
 
-            if hasattr(self, 'navigation_mode_checkbox') and self.navigation_mode_checkbox.value:
-                self._move_to_camera(current_timestep, smooth=self.smooth_navigation_checkbox.value)
-
-            if self.recent_n_mode_checkbox.value:
-                self.update_frame_visibility()
-            elif not self.range_mode_checkbox.value:
-                with self.server.atomic():
-                    self.frame_nodes[current_timestep].visible = True
-                    self.frame_nodes[prev_timestep].visible = False
-                self.server.flush()
+            with self.server.atomic():
+                self.frame_nodes[current_timestep].visible = True
+                self.frame_nodes[prev_timestep].visible = False
+            self.server.flush()
 
             prev_timestep = current_timestep
 

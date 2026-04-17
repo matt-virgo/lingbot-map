@@ -79,7 +79,10 @@ pip install -e ".[vis]"
 
 | Model Name | Huggingface Repository | ModelScope Repository | Description |
 | :--- | :--- | :--- | :--- |
-| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Base model checkpoint (4.63 GB) |
+| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Balanced checkpoint used in the paper and demo — strong all-around performance across short and long sequences. |
+| lingbot-map-long | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Better suited for long sequences. |
+
+> 🚧 **Coming soon:** we're training an stronger model that supports longer sequences — stay tuned.
 
 # 🎬 Demo
 
