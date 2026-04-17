@@ -186,6 +186,13 @@ python demo.py --model_path /path/to/checkpoint.pt \
     --image_folder /path/to/images/ --use_sdpa
 ```
 
+### Running on Limited GPU Memory
+
+If you run into out-of-memory issues, try one (or both) of the following:
+
+- **`--offload_to_cpu`** — offload per-frame predictions to CPU during inference (on by default; use `--no-offload_to_cpu` only if you have memory to spare).
+- **`--num_scale_frames 2`** — reduce the number of bidirectional scale frames from the default 8 down to 2, which shrinks the activation peak of the initial scale phase.
+
 # 📜 License
 
 This project is released under the Apache License 2.0. See [LICENSE](LICENSE.txt) file for details.
