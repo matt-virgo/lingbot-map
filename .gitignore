@@ -11,3 +11,8 @@ CLAUDE.md
 .claude/
 .agents/
 skyseg.onnx
+
+# Image assets / example data (not tracked in this fork)
+*.png
+*.jpg
+*.jpeg
