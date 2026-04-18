@@ -23,3 +23,12 @@ skyseg.onnx
 *.webm
 *.avi
 *.mkv
+
+# Model / checkpoint files
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.pkl
