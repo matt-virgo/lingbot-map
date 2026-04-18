@@ -127,7 +127,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 
 ### Streaming with Keyframe Interval
 
-Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames.
+Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames (We train with video RoPE on 320 views, so performance degrades when the KV cache stores more than 320 views. Using a keyframe strategy allows inference over longer sequences.).
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
@@ -139,7 +139,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10 \
-    --mode windowed --window_size 64
+    --mode windowed --window_size 128
 ```
 
 
