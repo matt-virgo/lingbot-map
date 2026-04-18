@@ -16,3 +16,10 @@ skyseg.onnx
 *.png
 *.jpg
 *.jpeg
+
+# Video files
+*.mp4
+*.mov
+*.webm
+*.avi
+*.mkv
