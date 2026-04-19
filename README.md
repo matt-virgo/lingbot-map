@@ -125,6 +125,46 @@ python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10
 ```
 
+### Live streaming (WebSocket + real-time viser)
+
+For **real-time** reconstruction, frames must arrive incrementally (e.g. from a
+Meta Wearables companion app over the network). Batch ``demo.py`` preloads all
+frames first; use ``demo_live.py`` instead.
+
+**1. Install live dependencies** (FastAPI / uvicorn / websockets):
+
+```bash
+pip install -e ".[vis,live]"
+```
+
+**2. Run the live server** (defaults: ``--camera_num_iterations 1``,
+``--keyframe_interval 4`` for bounded KV cache; use ``--image_size 378`` if the
+GPU cannot keep up):
+
+```bash
+python demo_live.py --model_path /path/to/checkpoint.pt --ingest_port 8765
+```
+
+**3. Send JPEG frames** on WebSocket path ``/ws``. Each binary message is:
+
+``<uint64 little-endian timestamp_us><uint32 little-endian jpeg_len><jpeg bytes>``
+
+**4. Mock the glasses with a video file or webcam** (second terminal on the same machine):
+
+```bash
+# Replay a local .mp4 at wall-clock FPS (recommended Ray-Ban mock)
+python -m lingbot_map.live.video_client \
+    --url ws://127.0.0.1:8765/ws \
+    --video videos/IMG_2559_000_lores.mp4 --fps 10
+
+# Or stream from a USB webcam
+python -m lingbot_map.live.webcam_client --url ws://127.0.0.1:8765/ws --camera 0
+```
+
+The first ``--num_scale_frames`` (default 8) messages are used as the scale batch;
+after that, each new frame is streamed through the persistent KV cache and
+incrementally appended to the viser scene at ``http://localhost:8080``.
+
 ### Streaming with Keyframe Interval
 
 Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames (We train with video RoPE on 320 views, so performance degrades when the KV cache stores more than 320 views. Using a keyframe strategy allows inference over longer sequences.).

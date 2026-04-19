@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 vis = ["viser>=0.2.23", "trimesh", "matplotlib", "onnxruntime", "requests"]
+live = ["fastapi>=0.115.0", "uvicorn[standard]>=0.32.0", "websockets>=13.0"]
 demo = ["lingbot-map[vis]"]
 
 [build-system]

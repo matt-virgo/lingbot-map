@@ -101,6 +101,7 @@ class PointCloudViewer:
         self.device = device
         self.conf_list = conf_list
         self.vis_threshold = vis_threshold
+        self.downsample_factor = downsample_factor
         self.point_size = point_size
         self.tt = lambda x: torch.from_numpy(x).float().to(device)
 
@@ -182,11 +183,17 @@ class PointCloudViewer:
         colors = images.transpose(0, 2, 3, 1)  # now (S, H, W, 3)
         S = world_points.shape[0]
 
-        # Store original images for camera frustum display
+        # Store original images for camera frustum display.
+        # Downsample to keep the sidebar preview cheap on the wire: a 256px edge
+        # cuts per-frame payload ~4x vs 518px, so manual playback over a slow
+        # link does not saturate the websocket.
         self.original_images = []
+        preview_stride = max(1, images.shape[2] // 256)
         for i in range(S):
             img = images[i]  # shape (3, H, W)
             img = (img.transpose(1, 2, 0) * 255).astype(np.uint8)
+            if preview_stride > 1:
+                img = img[::preview_stride, ::preview_stride]
             self.original_images.append(img)
 
         # Create lists - apply depth_stride to skip frames for point projection
@@ -305,7 +312,7 @@ class PointCloudViewer:
 
         # Video frame display controls — kept at top so the current frame is always visible
         with self.server.gui.add_folder("Video Display"):
-            self.show_video_checkbox = self.server.gui.add_checkbox("Show Current Frame", initial_value=True)
+            self.show_video_checkbox = self.server.gui.add_checkbox("Show Current Frame", initial_value=False)
             if hasattr(self, 'original_images') and len(self.original_images) > 0:
                 self.current_frame_image = self.server.gui.add_image(
                     self.original_images[0], label="Current Frame"
@@ -409,7 +416,8 @@ class PointCloudViewer:
             "Camera Size", min=0.01, max=0.5, step=0.01, initial_value=0.1
         )
         self.downsample_slider = self.server.gui.add_slider(
-            "Downsample Factor", min=1, max=1000, step=1, initial_value=10
+            "Downsample Factor", min=1, max=1000, step=1,
+            initial_value=self.downsample_factor,
         )
         self.show_camera_checkbox = self.server.gui.add_checkbox(
             "Show Camera", initial_value=self.show_camera
@@ -419,7 +427,8 @@ class PointCloudViewer:
             initial_value=self.vis_threshold,
         )
         self.camera_downsample_slider = self.server.gui.add_slider(
-            "Camera Downsample Factor", min=1, max=50, step=1, initial_value=1
+            "Camera Downsample Factor", min=1, max=50, step=1,
+            initial_value=max(1, self.num_frames // 20),
         )
 
         # Screenshot controls
@@ -1172,8 +1181,8 @@ class PointCloudViewer:
             )
             gui_next_frame = self.server.gui.add_button("Next Step", disabled=False)
             gui_prev_frame = self.server.gui.add_button("Prev Step", disabled=False)
-            gui_playing = self.server.gui.add_checkbox("Playing", True)
-            gui_framerate = self.server.gui.add_slider("FPS", min=1, max=60, step=0.1, initial_value=20)
+            gui_playing = self.server.gui.add_checkbox("Playing", False)
+            gui_framerate = self.server.gui.add_slider("FPS", min=1, max=60, step=0.1, initial_value=10)
             gui_framerate_options = self.server.gui.add_button_group("FPS options", ("10", "20", "30", "60"))
 
         @gui_next_frame.on_click

@@ -241,3 +241,78 @@ def load_and_preprocess_images(image_path_list, fx=None, fy=None, cx=None, cy=No
     if fx is not None:
         return images, fx, fy, cx, cy
     return images
+
+
+def preprocess_single_frame(
+    image_rgb: np.ndarray,
+    mode: str = "crop",
+    image_size: int = 518,
+    patch_size: int = 14,
+) -> torch.Tensor:
+    """
+    Preprocess a single in-memory RGB image for GCT / LingBot-Map inference.
+
+    Matches ``load_and_preprocess_images(..., mode="crop")`` geometry (width
+    fixed to ``image_size``, height scaled and divisible by ``patch_size``,
+    optional vertical center-crop) without disk I/O.
+
+    Args:
+        image_rgb: ``(H, W, 3)`` uint8 RGB, or float in ``[0, 1]`` or ``[0, 255]``.
+        mode: ``"crop"`` or ``"pad"`` (same semantics as ``load_and_preprocess_images``).
+        image_size: Target width for crop mode (or max side behavior for pad).
+        patch_size: ViT patch size (e.g. 14 for DINOv2-L/14).
+
+    Returns:
+        Float tensor ``(1, 3, H, W)`` in ``[0, 1]``.
+    """
+    if image_rgb.ndim != 3 or image_rgb.shape[2] != 3:
+        raise ValueError(f"image_rgb must be (H, W, 3), got {image_rgb.shape}")
+
+    if mode not in ["crop", "pad"]:
+        raise ValueError("Mode must be either 'crop' or 'pad'")
+
+    if image_rgb.dtype == np.uint8:
+        arr = image_rgb
+    else:
+        arr_f = np.asarray(image_rgb, dtype=np.float32)
+        if arr_f.max() <= 1.0 + 1e-6:
+            arr = (np.clip(arr_f, 0.0, 1.0) * 255.0).astype(np.uint8)
+        else:
+            arr = np.clip(arr_f, 0.0, 255.0).astype(np.uint8)
+
+    img = Image.fromarray(arr, mode="RGB")
+    width, height = img.size
+    target_size = image_size
+    to_tensor = TF.ToTensor()
+
+    if mode == "pad":
+        if width >= height:
+            new_width = target_size
+            new_height = round(height * (new_width / width) / patch_size) * patch_size
+        else:
+            new_height = target_size
+            new_width = round(width * (new_height / height) / patch_size) * patch_size
+    else:
+        new_width = target_size
+        new_height = round(height * (new_width / width) / patch_size) * patch_size
+
+    img = img.resize((new_width, new_height), Image.Resampling.BICUBIC)
+    img = to_tensor(img)
+
+    if mode == "crop" and new_height > target_size:
+        start_y = (new_height - target_size) // 2
+        img = img[:, start_y : start_y + target_size, :]
+
+    if mode == "pad":
+        h_padding = target_size - img.shape[1]
+        w_padding = target_size - img.shape[2]
+        if h_padding > 0 or w_padding > 0:
+            pad_top = h_padding // 2
+            pad_bottom = h_padding - pad_top
+            pad_left = w_padding // 2
+            pad_right = w_padding - pad_left
+            img = torch.nn.functional.pad(
+                img, (pad_left, pad_right, pad_top, pad_bottom), mode="constant", value=1.0
+            )
+
+    return img.unsqueeze(0)
