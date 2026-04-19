@@ -129,6 +129,7 @@ def load_model(args, device):
         print(f"Loading checkpoint: {args.model_path}")
         ckpt = torch.load(args.model_path, map_location=device, weights_only=False)
         state_dict = ckpt.get("model", ckpt)
+        _resize_pos_embed_if_needed(state_dict, model)
         missing, unexpected = model.load_state_dict(state_dict, strict=False)
         if missing:
             print(f"  Missing keys: {len(missing)}")
@@ -137,6 +138,48 @@ def load_model(args, device):
         print("  Checkpoint loaded.")
 
     return model.to(device).eval()
+
+
+def _resize_pos_embed_if_needed(state_dict: dict, model: torch.nn.Module) -> None:
+    """
+    Bicubic-interpolate ``aggregator.patch_embed.pos_embed`` if the checkpoint
+    was trained at a different image size than the current model. Standard
+    DINOv2 trick: keep the [CLS] row, resize the spatial grid.
+
+    Mutates ``state_dict`` in place; no-op if shapes already match.
+    """
+    import torch.nn.functional as F
+
+    key = "aggregator.patch_embed.pos_embed"
+    if key not in state_dict:
+        return
+    src = state_dict[key]
+    tgt_shape = model.state_dict().get(key).shape if key in model.state_dict() else None
+    if tgt_shape is None or src.shape == tgt_shape:
+        return
+    if src.ndim != 3 or len(tgt_shape) != 3 or src.shape[2] != tgt_shape[2]:
+        return  # unexpected layout, bail out (strict=False will still load the rest)
+
+    n_src = src.shape[1]
+    n_tgt = tgt_shape[1]
+    # Assume 1 CLS token + HxH grid (same assumption as DINOv2 / VGGT patch embeds).
+    cls_tok, grid = src[:, :1], src[:, 1:]
+    grid_src_n = grid.shape[1]
+    grid_tgt_n = n_tgt - 1
+    h_src = int(round(grid_src_n ** 0.5))
+    h_tgt = int(round(grid_tgt_n ** 0.5))
+    if h_src * h_src != grid_src_n or h_tgt * h_tgt != grid_tgt_n:
+        return  # not a square grid; skip
+
+    C = grid.shape[2]
+    grid2d = grid.reshape(1, h_src, h_src, C).permute(0, 3, 1, 2).float()
+    grid2d = F.interpolate(grid2d, size=(h_tgt, h_tgt), mode="bicubic", align_corners=False)
+    grid_new = grid2d.permute(0, 2, 3, 1).reshape(1, h_tgt * h_tgt, C).to(src.dtype)
+    state_dict[key] = torch.cat([cls_tok, grid_new], dim=1)
+    print(
+        f"  Resized pos_embed: {h_src}x{h_src}+1 -> {h_tgt}x{h_tgt}+1 "
+        f"({n_src} -> {n_tgt} tokens) via bicubic interpolation."
+    )
 
 
 # =============================================================================
@@ -183,7 +226,8 @@ def postprocess(predictions, images):
     predictions.pop("pose_enc_list", None)
     predictions.pop("images", None)
 
-    print("Moving results to CPU...")
+    if os.environ.get("LINGBOT_VERBOSE_POSTPROCESS"):
+        print("Moving results to CPU...")
     for k in list(predictions.keys()):
         if isinstance(predictions[k], torch.Tensor):
             predictions[k] = _squeeze_single_batch(

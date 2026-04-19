@@ -53,6 +53,18 @@ class FrameMessage:
     """OpenCV BGR image, shape ``(H, W, 3)``, ``uint8``."""
 
 
+@dataclass
+class IngestStats:
+    """Cumulative counters updated by the ingest server (thread-safe enough
+    for simple read-only sampling from the main thread; ints are atomic in
+    CPython)."""
+
+    received: int = 0
+    decoded: int = 0
+    dropped: int = 0
+    decode_errors: int = 0
+
+
 def _decode_jpeg_message(data: bytes) -> Tuple[int, np.ndarray]:
     if len(data) < 12:
         raise ValueError(f"message too short: {len(data)} bytes (need >= 12)")
@@ -73,6 +85,7 @@ def create_ingest_app(
     frame_queue: "Queue",
     max_queue_size: int = 2,
     on_health: Optional[Callable[[], str]] = None,
+    stats: Optional[IngestStats] = None,
 ) -> "FastAPI":
     """
     Build a FastAPI app that accepts JPEG frames on ``/ws``.
@@ -94,25 +107,27 @@ def create_ingest_app(
         pass
 
     app = FastAPI(title="LingBot-Map live ingest", version="0.1.0")
+    _stats = stats if stats is not None else IngestStats()
 
     def _put_drop_oldest(msg: FrameMessage) -> None:
         if frame_queue.full():
             try:
                 frame_queue.get_nowait()
+                _stats.dropped += 1
             except Empty:
                 pass
         try:
             frame_queue.put_nowait(msg)
         except Full:
-            # Should not happen after drain; drop and retry once
             try:
                 frame_queue.get_nowait()
+                _stats.dropped += 1
             except Empty:
                 pass
             try:
                 frame_queue.put_nowait(msg)
             except Full:
-                pass
+                _stats.dropped += 1
 
     @app.get("/health")
     async def health():
@@ -130,13 +145,17 @@ def create_ingest_app(
         try:
             while True:
                 data = await websocket.receive_bytes()
+                _stats.received += 1
+
                 def _decode_and_enqueue(raw: bytes) -> None:
                     ts_us, bgr = _decode_jpeg_message(raw)
                     _put_drop_oldest(FrameMessage(timestamp_us=ts_us, bgr=bgr))
+                    _stats.decoded += 1
 
                 try:
                     await asyncio.to_thread(_decode_and_enqueue, data)
                 except ValueError as exc:
+                    _stats.decode_errors += 1
                     await websocket.send_text(f"error: {exc}")
                     continue
         except WebSocketDisconnect:
@@ -152,6 +171,7 @@ def run_ingest_server_thread(
     *,
     max_queue_size: int = 2,
     log_level: str = "warning",
+    stats: Optional[IngestStats] = None,
 ) -> threading.Thread:
     """
     Start uvicorn serving ``create_ingest_app`` in a daemon thread.
@@ -171,7 +191,7 @@ def run_ingest_server_thread(
             "Live ingest requires uvicorn. Install with: pip install 'lingbot-map[live]'"
         ) from e
 
-    app = create_ingest_app(frame_queue, max_queue_size=max_queue_size)
+    app = create_ingest_app(frame_queue, max_queue_size=max_queue_size, stats=stats)
 
     def _serve() -> None:
         config = uvicorn.Config(

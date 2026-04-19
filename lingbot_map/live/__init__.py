@@ -6,6 +6,16 @@
 
 """Live streaming ingest (WebSocket) and helpers for real-time LingBot-Map."""
 
-from lingbot_map.live.ingest import FrameMessage, create_ingest_app, run_ingest_server_thread
+from lingbot_map.live.ingest import (
+    FrameMessage,
+    IngestStats,
+    create_ingest_app,
+    run_ingest_server_thread,
+)
 
-__all__ = ["FrameMessage", "create_ingest_app", "run_ingest_server_thread"]
+__all__ = [
+    "FrameMessage",
+    "IngestStats",
+    "create_ingest_app",
+    "run_ingest_server_thread",
+]
