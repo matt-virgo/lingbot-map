@@ -294,6 +294,39 @@ session.setFrameCallback { frame ->
 
 At 5 fps × 30 KB/frame = **150 KB/s ≈ 1.2 Mbps** uplink. Comfortable on WiFi, workable on 4G, tight on weak cellular.
 
+### Common visual-quality pitfalls
+
+Observed on first-run integrations; if the server's side-by-side HUD shows a squished camera view or a dark reconstruction view, it is almost always one of these:
+
+1. **Squished / stretched camera feed**
+    - **Symptom**: faces elongated, straight vertical lines tilted, circle appears as oval.
+    - **Cause**: the bitmap you send has non-square pixels, i.e. its `width:height` ratio doesn't match the sensor's native aspect. Happens when you `Bitmap.createScaledBitmap(src, 720, 540, ...)` on a frame whose native aspect is 16:9 or 4:3, without letterbox/padding.
+    - **Fix**: pass the frame through **without aspect-ratio distortion**. Either send the native-resolution bitmap directly (preferred — server will resize correctly) or, if you must resize, use a resize that preserves aspect and center-crops/pads to the target. The server accepts any resolution and does its own proportional resize to `518 × H` internally.
+    - **Quick check**: print `bitmap.width / bitmap.height.toFloat()` before encoding. Ray-Ban Meta forward camera native aspect is **~4:3 (≈ 1.33)** for photo mode and **~16:9 (≈ 1.78)** for video mode. If you're sending e.g. 720×540 (1.33) but your native source is 16:9, you're stretching it.
+
+2. **Dark or black reconstruction view ("Point cloud from camera")**
+    - **Symptom**: the right-hand HUD panel looks almost black even while the left panel shows a well-lit scene.
+    - **Cause (partial)**: typically means the scene has depth/texture the model isn't confident about yet, so few points are projected into the frame. With typical downsampling and confidence thresholds, an under-populated view renders almost entirely as background.
+    - **Cause (your side)**: sending frames that are **too dark or low-contrast** (e.g. indoor without proper white balance, or applying gamma/tone-mapping before encoding) starves the model of features, so it produces fewer confident depth points → sparser reconstruction → darker HUD.
+    - **Fix**:
+        - Let the Ray-Ban auto-exposure do its job; **do not** manually lower exposure, apply gamma, or tone-map.
+        - Encode in **sRGB color space** (default `Bitmap.compress(JPEG)` output). Do not tag with a non-standard color profile.
+        - Do not pre-darken to reduce file size. Use the JPEG quality knob (80–90) for that.
+        - Make sure you're not accidentally encoding the alpha channel or a grayscale `Bitmap.Config.ALPHA_8`. Use `Bitmap.Config.ARGB_8888` (or at least RGB_565 if memory is tight) as the source.
+
+3. **Upside-down or sideways reconstruction**
+    - **Symptom**: the camera HUD looks fine but the 3D scene's "up" is wrong; walking forward moves the point cloud sideways.
+    - **Cause**: JPEG EXIF orientation tag set, or the frame is pre-rotated but the sensor-reported dimensions weren't swapped accordingly.
+    - **Fix**: **bake rotation into the pixels** before encoding. Strip EXIF. Our server uses `cv2.imdecode` which ignores EXIF orientation, so any rotation flag you set will be silently discarded — the pixels must already be upright.
+
+4. **Weird hue / washed-out colors**
+    - **Cause**: YUV → RGB conversion with wrong color matrix (BT.601 vs BT.709) or incomplete range expansion (limited-range 16-235 treated as full-range 0-255).
+    - **Fix**: if you're pulling YUV from the Wearables SDK, convert using an SDK-provided helper if available. Otherwise use `YuvImage.compressToJpeg` (NV21 in, JPEG out) rather than rolling your own matrix.
+
+### How to self-verify image quality from the app
+
+Before blaming the server, periodically save a debug JPEG to the phone's local storage (the exact bytes you're about to send over the socket), then open it in the phone's Gallery. If it looks wrong there, it's an encoding issue. If it looks right there but wrong in the server's HUD, ping the server operator.
+
 ---
 
 ## 7. Backpressure & reconnection

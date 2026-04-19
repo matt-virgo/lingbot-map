@@ -148,7 +148,10 @@ class LiveIncrementalViewer:
         """
         H = self.pc_hud_height
         W = max(1, int(round(H * (W_in / max(H_in, 1)))))
-        img = np.zeros((H, W, 3), dtype=np.uint8)
+        # Neutral mid-gray background so sparse points don't read as "dark".
+        # Black was visually misleading: it looked like low exposure when really
+        # there were just few points projected into the frame.
+        img = np.full((H, W, 3), 60, dtype=np.uint8)
         if not self._pc_cache:
             return img
 
@@ -190,11 +193,13 @@ class LiveIncrementalViewer:
         v = v[order]
         cols = cols[order]
 
-        # 2x2 splat so sparse points are actually visible at this resolution.
-        for du, dv in ((0, 0), (1, 0), (0, 1), (1, 1)):
-            uu = np.minimum(u + du, W - 1)
-            vv = np.minimum(v + dv, H - 1)
-            img[vv, uu] = cols
+        # 3x3 splat so sparse points read as a continuous surface at this
+        # resolution (was 2x2; looked dotty / dark with typical downsampling).
+        for du in (-1, 0, 1):
+            for dv in (-1, 0, 1):
+                uu = np.clip(u + du, 0, W - 1)
+                vv = np.clip(v + dv, 0, H - 1)
+                img[vv, uu] = cols
         return img
 
     def _filter_points(
